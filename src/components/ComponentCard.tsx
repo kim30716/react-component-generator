@@ -8,12 +8,15 @@ interface ComponentCardProps {
   onRemove: (id: string) => void;
   onRegenerate: (prompt: string) => void;
   isLoading: boolean;
+  /** 코드를 스트리밍으로 받는 중인 카드. 코드 탭만 보여 주고 조작을 막는다. */
+  streaming?: boolean;
 }
 
 type Tab = 'preview' | 'code';
 
-export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: ComponentCardProps) {
+export function ComponentCard({ component, onRemove, onRegenerate, isLoading, streaming = false }: ComponentCardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('preview');
+  const currentTab: Tab = streaming ? 'code' : activeTab;
   const [previewKey, setPreviewKey] = useState(0);
   const createdAt = component.createdAt.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -31,6 +34,7 @@ export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: 
           <button
             className="btn-refresh"
             onClick={() => setPreviewKey((k) => k + 1)}
+            disabled={streaming}
             title="미리보기 새로고침"
             aria-label="미리보기 새로고침"
           >
@@ -46,6 +50,7 @@ export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: 
           <button
             className="btn-remove"
             onClick={() => onRemove(component.id)}
+            disabled={streaming}
           >
             삭제
           </button>
@@ -53,20 +58,21 @@ export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: 
       </div>
       <div className="card-tabs">
         <button
-          className={`tab ${activeTab === 'preview' ? 'tab--active' : ''}`}
+          className={`tab ${currentTab === 'preview' ? 'tab--active' : ''}`}
           onClick={() => setActiveTab('preview')}
+          disabled={streaming}
         >
           미리보기
         </button>
         <button
-          className={`tab ${activeTab === 'code' ? 'tab--active' : ''}`}
+          className={`tab ${currentTab === 'code' ? 'tab--active' : ''}`}
           onClick={() => setActiveTab('code')}
         >
           코드
         </button>
       </div>
       <div className="card-content">
-        {activeTab === 'preview' ? (
+        {currentTab === 'preview' ? (
           <LivePreview key={previewKey} code={component.code} />
         ) : (
           <CodeView code={component.code} />

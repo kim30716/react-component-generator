@@ -30,7 +30,8 @@ function App() {
     anthropic: false,
     google: false,
   });
-  const { components, isLoading, error, storageFailed, generate, removeComponent, clearAll } =
+  const [pendingPrompt, setPendingPrompt] = useState('');
+  const { components, isLoading, streamingCode, error, storageFailed, generate, removeComponent, clearAll } =
     useComponentGenerator();
 
   useEffect(() => {
@@ -55,6 +56,7 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
+    setPendingPrompt(prompt);
     // 실패한 프롬프트가 히스토리 자리를 차지하지 않도록 생성에 성공했을 때만 기록한다.
     generate(prompt, apiKey || undefined, provider).then((succeeded) => {
       if (succeeded) setHistory((prev) => addToHistory(prev, prompt));
@@ -188,14 +190,22 @@ function App() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="loading-card">
-            <div className="loading-pulse" />
-            <p>컴포넌트를 생성하고 있습니다...</p>
-          </div>
-        )}
-
         <div className="results-grid">
+          {streamingCode !== null && (
+            <ComponentCard
+              key="streaming"
+              component={{
+                id: 'streaming',
+                prompt: pendingPrompt,
+                code: streamingCode,
+                createdAt: new Date(),
+              }}
+              onRemove={removeComponent}
+              onRegenerate={handleGenerate}
+              isLoading={isLoading}
+              streaming
+            />
+          )}
           {components.map((component) => (
             <ComponentCard
               key={component.id}
