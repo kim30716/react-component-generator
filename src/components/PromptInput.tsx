@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { validatePrompt } from '../utils/validatePrompt';
 
 interface PromptInputProps {
   onGenerate: (prompt: string) => void;
@@ -17,9 +18,11 @@ const EXAMPLES = [
 export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
 
+  const { valid, error } = validatePrompt(prompt);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim() && !isLoading) {
+    if (prompt.trim() && valid && !isLoading) {
       onGenerate(prompt.trim());
     }
   };
@@ -47,10 +50,15 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
             }
           }}
         />
+        {error && (
+          <div className="error-banner" role="alert">
+            <p>{error}</p>
+          </div>
+        )}
         <button
           type="submit"
           className="btn-generate"
-          disabled={!prompt.trim() || isLoading}
+          disabled={!prompt.trim() || !valid || isLoading}
         >
           {isLoading ? (
             <span className="loading-spinner">생성 중...</span>
