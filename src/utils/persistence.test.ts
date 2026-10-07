@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   MAX_HISTORY,
   addToHistory,
-  parseApiKeys,
+  clearLegacyKeys,
   parseComponents,
   parseHistory,
   parseProvider,
@@ -26,23 +26,20 @@ describe('parseProvider', () => {
   });
 });
 
-describe('parseApiKeys', () => {
-  it('저장된 값이 없으면 provider별 빈 문자열이다', () => {
-    expect(parseApiKeys(null)).toEqual({ anthropic: '', google: '' });
+describe('clearLegacyKeys', () => {
+  it('이전 버전이 저장했던 API 키 항목을 삭제한다', () => {
+    const storage = { removeItem: vi.fn() };
+    clearLegacyKeys(storage);
+    expect(storage.removeItem).toHaveBeenCalledWith('rcg:apiKeys');
   });
 
-  it('provider별 키를 복원한다', () => {
-    const raw = JSON.stringify({ anthropic: 'sk-ant-1', google: 'AIza-1' });
-    expect(parseApiKeys(raw)).toEqual({ anthropic: 'sk-ant-1', google: 'AIza-1' });
-  });
-
-  it('문자열이 아닌 값은 빈 문자열로 처리한다', () => {
-    const raw = JSON.stringify({ anthropic: 123, google: 'AIza-1' });
-    expect(parseApiKeys(raw)).toEqual({ anthropic: '', google: 'AIza-1' });
-  });
-
-  it('JSON이 깨졌으면 빈 키를 반환한다', () => {
-    expect(parseApiKeys('{깨짐')).toEqual({ anthropic: '', google: '' });
+  it('저장소 접근이 실패해도 예외를 던지지 않는다', () => {
+    const storage = {
+      removeItem: () => {
+        throw new Error('접근 불가');
+      },
+    };
+    expect(() => clearLegacyKeys(storage)).not.toThrow();
   });
 });
 

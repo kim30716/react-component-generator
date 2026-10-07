@@ -2,7 +2,6 @@ import type { GeneratedComponent, Provider } from '../types';
 
 export const STORAGE_KEYS = {
   provider: 'rcg:provider',
-  apiKeys: 'rcg:apiKeys',
   history: 'rcg:promptHistory',
   components: 'rcg:components',
 } as const;
@@ -31,12 +30,16 @@ export function parseProvider(raw: string | null): Provider {
   return PROVIDERS.find((p) => p === value) ?? DEFAULT_PROVIDER;
 }
 
-export function parseApiKeys(raw: string | null): Record<Provider, string> {
-  const value = safeParse(raw);
-  const source = isRecord(value) ? value : {};
-  const pick = (provider: Provider) =>
-    typeof source[provider] === 'string' ? (source[provider] as string) : '';
-  return { anthropic: pick('anthropic'), google: pick('google') };
+// API 키는 생성된 코드와 같은 origin에 저장하면 미리보기 코드가 읽어 갈 수 있어 더 이상 저장하지 않는다.
+// 이전 버전이 남긴 키 항목은 앱 시작 시 지운다.
+const LEGACY_KEYS = ['rcg:apiKeys'];
+
+export function clearLegacyKeys(storage: Pick<Storage, 'removeItem'>): void {
+  try {
+    LEGACY_KEYS.forEach((key) => storage.removeItem(key));
+  } catch {
+    // 저장소 접근이 막혀 있으면 지울 것도 없다.
+  }
 }
 
 export function parseHistory(raw: string | null): string[] {

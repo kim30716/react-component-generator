@@ -6,7 +6,7 @@ import { usePersistentState } from './hooks/usePersistentState';
 import {
   STORAGE_KEYS,
   addToHistory,
-  parseApiKeys,
+  clearLegacyKeys,
   parseHistory,
   parseProvider,
 } from './utils/persistence';
@@ -19,8 +19,9 @@ const PROVIDER_CONFIG = {
 } as const;
 
 function App() {
-  // API 키는 provider별로 보관한다. 다른 provider의 키가 요청에 섞여 나가지 않게 하기 위함이다.
-  const [apiKeys, setApiKeys] = usePersistentState(STORAGE_KEYS.apiKeys, parseApiKeys);
+  // API 키는 localStorage에 저장하지 않고 메모리에만 둔다. 미리보기가 생성된 코드를 같은 origin에서
+  // 실행하므로, 저장해 두면 생성된 코드가 키를 읽어 갈 수 있다. provider별로 보관해 키가 섞여 나가지 않게 한다.
+  const [apiKeys, setApiKeys] = useState<Record<Provider, string>>({ anthropic: '', google: '' });
   const [provider, setProvider] = usePersistentState(STORAGE_KEYS.provider, parseProvider);
   const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, parseHistory);
   const [showKey, setShowKey] = useState(false);
@@ -31,6 +32,14 @@ function App() {
   });
   const { components, isLoading, error, generate, removeComponent, clearAll } =
     useComponentGenerator();
+
+  useEffect(() => {
+    try {
+      clearLegacyKeys(localStorage);
+    } catch {
+      // localStorage 참조 자체가 막힌 환경(일부 시크릿 모드)에서는 지울 것이 없다.
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/config')
