@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const MAX_HISTORY = 20;
+export const MAX_COMPONENTS = 50;
 
 const PROVIDERS: readonly Provider[] = ['anthropic', 'google'];
 const DEFAULT_PROVIDER: Provider = 'google';
@@ -67,4 +68,11 @@ export function addToHistory(history: string[], prompt: string): string[] {
   const trimmed = prompt.trim();
   if (!trimmed) return history;
   return [trimmed, ...history.filter((item) => item !== trimmed)].slice(0, MAX_HISTORY);
+}
+
+export function addComponent(
+  components: GeneratedComponent[],
+  component: GeneratedComponent,
+): GeneratedComponent[] {
+  return [component, ...components].slice(0, MAX_COMPONENTS);
 }
