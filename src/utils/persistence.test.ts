@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { GeneratedComponent } from '../types';
 import {
+  MAX_COMPONENTS,
   MAX_HISTORY,
+  addComponent,
   addToHistory,
   clearLegacyKeys,
   parseComponents,
@@ -96,6 +99,27 @@ describe('parseComponents', () => {
 
   it('JSON이 깨졌으면 빈 배열이다', () => {
     expect(parseComponents('{깨짐')).toEqual([]);
+  });
+});
+
+describe('addComponent', () => {
+  const make = (id: string): GeneratedComponent => ({
+    id,
+    prompt: id,
+    code: '',
+    createdAt: new Date(),
+  });
+
+  it('새 컴포넌트를 맨 앞에 추가한다', () => {
+    expect(addComponent([make('a')], make('b')).map((c) => c.id)).toEqual(['b', 'a']);
+  });
+
+  it(`최대 ${MAX_COMPONENTS}개까지만 유지하고 가장 오래된 것을 버린다`, () => {
+    const list = Array.from({ length: MAX_COMPONENTS }, (_, i) => make(`c${i}`));
+    const next = addComponent(list, make('new'));
+    expect(next).toHaveLength(MAX_COMPONENTS);
+    expect(next[0].id).toBe('new');
+    expect(next.map((c) => c.id)).not.toContain(`c${MAX_COMPONENTS - 1}`);
   });
 });
 

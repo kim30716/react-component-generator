@@ -30,7 +30,7 @@ function App() {
     anthropic: false,
     google: false,
   });
-  const { components, isLoading, error, generate, removeComponent, clearAll } =
+  const { components, isLoading, error, storageFailed, generate, removeComponent, clearAll } =
     useComponentGenerator();
 
   useEffect(() => {
@@ -55,8 +55,10 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
-    setHistory((prev) => addToHistory(prev, prompt));
-    generate(prompt, apiKey || undefined, provider);
+    // 실패한 프롬프트가 히스토리 자리를 차지하지 않도록 생성에 성공했을 때만 기록한다.
+    generate(prompt, apiKey || undefined, provider).then((succeeded) => {
+      if (succeeded) setHistory((prev) => addToHistory(prev, prompt));
+    });
   };
 
   const handleApiKeyChange = (value: string) => {
@@ -144,6 +146,12 @@ function App() {
       {error && (
         <div className="error-banner">
           <p>{error}</p>
+        </div>
+      )}
+
+      {storageFailed && (
+        <div className="error-banner" role="status">
+          <p>브라우저 저장 공간이 부족해 생성된 컴포넌트를 저장하지 못했습니다. 새로고침하면 목록이 이전 상태로 돌아갈 수 있습니다. 오래된 컴포넌트를 삭제해주세요.</p>
         </div>
       )}
 
